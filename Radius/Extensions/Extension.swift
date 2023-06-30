@@ -9,8 +9,6 @@ import Foundation
 import UIKit
 
 public extension String {
-    
-    /// Returns the lenght of the string.
     var length: Int {
         return self.count
     }

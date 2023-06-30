@@ -8,7 +8,7 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
     //MARK: - OUTLETS
     @IBOutlet weak var tblFacilities: UITableView!
     
@@ -16,7 +16,7 @@ class ViewController: UIViewController {
     //MARK: - VARIABLES
     var arrFacilities: [Facilities]?
     var arrExclusion: [[Exclusions]]?
-    var selectedIndex: IndexPath?
+    var dictSelection = [String:String]()
     
     //MARK: - VIEW LIFECYCLE
     override func viewDidLoad() {
@@ -25,12 +25,10 @@ class ViewController: UIViewController {
         
         Initialize()
     }
-
-
+    
     //MARK: - INITIALIZE METHOD
     func Initialize()
     {
-        
         getData()
     }
     
@@ -39,7 +37,7 @@ class ViewController: UIViewController {
     func getData() {
         Service.shareInstance.GetFacilityAPICall() { (facilitiesData, error) in
             if (facilitiesData != nil){
-                                
+                
                 self.arrFacilities = facilitiesData?.facilities
                 self.arrExclusion = facilitiesData?.exclusions
                 
@@ -51,14 +49,44 @@ class ViewController: UIViewController {
         }
     }
     
+    func isDisable(_ indexpath: IndexPath) -> Bool {
+        
+        var isDisable = false
+        
+        for key in dictSelection.keys {
+            
+            let selectedFacilityId = key
+            let selectedOptionId = dictSelection[key]
+            
+            let currentFacilityId = arrFacilities?[indexpath.section].facilityId ?? ""
+            let currentOptionId = arrFacilities?[indexpath.section].options?[indexpath.item].id ?? ""
+            
+            if !isDisable {
+                arrExclusion?.forEach({ arr in
+                    let obj = arr.filter{ $0.facility_id == selectedFacilityId }.first
+                    if obj?.facility_id == selectedFacilityId && obj?.options_id == selectedOptionId {
+                        arr.forEach { subArr in
+                            if (subArr.facility_id == currentFacilityId && subArr.options_id == currentOptionId) && (subArr.facility_id != selectedFacilityId && subArr.options_id != selectedOptionId) {
+                                isDisable = true
+                            }
+                        }
+                        
+                    }
+                })
+            }
+        }
+        
+        return isDisable
+        
+    }
 }
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
-
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
-
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         if (self.arrFacilities?.count ?? 0) == 0
@@ -71,11 +99,11 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         
         return self.arrFacilities?.count ?? 0
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-
+        
         guard let cell = tableView.dequeueReusableCell(withIdentifier: "tblFacilitiesCell", for: indexPath) as? tblFacilitiesCell else { return UITableViewCell() }
-
+        
         if let dict = self.arrFacilities?[indexPath.row]
         {
             cell.lblFacilityTitle.text = dict.name
@@ -97,7 +125,7 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
         
     }
-
+    
 }
 
 extension ViewController : UICollectionViewDelegate,UICollectionViewDataSource,UICollectionViewDelegateFlowLayout
@@ -126,67 +154,51 @@ extension ViewController : UICollectionViewDelegate,UICollectionViewDataSource,U
         if let dict = arrFacilities?[collectionView.tag].options?[indexPath.row]
         {
             cell.lblOptionTitle.text = dict.name
-
+            
             cell.imgOption.image = UIImage(named: dict.icon ?? "")
             
             cell.viewMain.borderWidth = 1.0
             cell.viewMain.borderColor = UIColor.lightGray
             cell.viewMain.cornerRadius = 8.0
             
-            if collectionView.tag == selectedIndex?.section && indexPath.row == selectedIndex?.item {
+            let currentFacilityId = arrFacilities?[collectionView.tag].facilityId ?? ""
+            let currentOptionId = arrFacilities?[collectionView.tag].options?[indexPath.row].id ?? ""
+            
+            if dictSelection[currentFacilityId] == currentOptionId {
                 cell.viewSelected.isHidden = false
-            }else{
-                
+            } else {
                 cell.viewSelected.isHidden = true
             }
-                  
+            
             let currentIndexPath = IndexPath(item: indexPath.row, section: collectionView.tag)
-            cell.viewMain.backgroundColor = isDisable(currentIndexPath) ? .red : .green
+            cell.viewMain.backgroundColor = isDisable(currentIndexPath) ? .red : .white
         }
         
         return cell
         
     }
     
-    func isDisable(_ indexpath: IndexPath) -> Bool {
-        var isDisable = false
-        if let index = selectedIndex {
-            let selectedFacilityId = arrFacilities?[index.section].facilityId ?? ""
-            let selectedOptionId = arrFacilities?[index.section].options?[index.item].id ?? ""
-            
-            let currentFacilityId = arrFacilities?[indexpath.section].facilityId ?? ""
-            let currentOptionId = arrFacilities?[indexpath.section].options?[indexpath.item].id ?? ""
-            
-            if !isDisable {
-                arrExclusion?.forEach({ arr in
-                    let obj = arr.filter{ $0.facility_id == selectedFacilityId }.first
-                    if obj?.facility_id == selectedFacilityId && obj?.options_id == selectedOptionId {
-                        arr.forEach { subArr in
-                            if (subArr.facility_id == currentFacilityId && subArr.options_id == currentOptionId) && (subArr.facility_id != selectedFacilityId && subArr.options_id != selectedOptionId) {
-                                isDisable = true
-                            }
-                        }
-
-                    }
-                })
-            }
-        }
-        return isDisable
-    }
-    
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        let facilityId = arrFacilities?[collectionView.tag].facilityId ?? ""
+        let optionId = arrFacilities?[collectionView.tag].options?[indexPath.row].id ?? ""
         
         let currentIndexPath = IndexPath(item: indexPath.row, section: collectionView.tag)
         if !isDisable(currentIndexPath) {
-            self.selectedIndex = IndexPath(item: indexPath.row, section: collectionView.tag)
-            tblFacilities.reloadData()
+            if dictSelection[facilityId] == optionId {
+                dictSelection[facilityId] = nil
+            } else {
+                dictSelection[facilityId] = optionId
+            }
+            
+            self.tblFacilities.reloadData()
         }
         
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-
+        
         return CGSize(width: 110.0, height: 110.0)
-
+        
     }
 }

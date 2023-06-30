@@ -6,7 +6,7 @@ target 'Radius' do
   use_frameworks!
 
   # Pods for Radius
-pod 'Alamofire'
+    pod 'Alamofire'
     pod 'ReachabilitySwift'
     pod 'NVActivityIndicatorView', '~> 4.4.0'
 

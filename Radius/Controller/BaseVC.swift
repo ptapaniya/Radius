@@ -28,7 +28,6 @@ class BaseVC: UIViewController, UIGestureRecognizerDelegate, NVActivityIndicator
     
     //MARK: - **********************  REGISTER XIB **********************
     
-    //Register TableViewCell
     func registerTableViewCell(cellName : String , to tableView: UITableView) {
         
         let cellNIB = UINib(nibName: cellName, bundle: nil)
@@ -40,7 +39,7 @@ class BaseVC: UIViewController, UIGestureRecognizerDelegate, NVActivityIndicator
     func createMainLoaderInView(_ message : String) {
         runOnMainThread {
             let size = CGSize(width: 40, height: 40)
-            self.startAnimating(size, message: message, type: .ballSpinFadeLoader)//ballClipRotatePulse
+            self.startAnimating(size, message: message, type: .ballSpinFadeLoader)
         }
     }
     
