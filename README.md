@@ -9,5 +9,5 @@
 - pod 'ReachabilitySwift'
    - Swift Use closures and notifications to deliver Network State.
 
-- pod 'NVActivityIndicatorView', '~> 4.4.0'
+- pod 'NVActivityIndicatorView'
    - NVActivityIndicatorView is a collection of awesome loading indicator with animations.
